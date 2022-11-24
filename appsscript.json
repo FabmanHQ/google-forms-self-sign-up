@@ -1,0 +1,18 @@
+{
+  "timeZone": "Europe/Vienna",
+  "dependencies": {
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "urlFetchWhitelist": [
+    "https://fabman.io/api/v1",
+    "https://internal.fabman.io/api/v1"
+  ],
+  "oauthScopes": [
+      "https://www.googleapis.com/auth/spreadsheets.currentonly",
+      "https://www.googleapis.com/auth/forms",
+      "https://www.googleapis.com/auth/script.external_request",
+      "https://www.googleapis.com/auth/script.scriptapp",
+      "https://www.googleapis.com/auth/gmail.send"
+  ]
+}
