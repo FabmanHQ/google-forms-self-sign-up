@@ -151,15 +151,16 @@ function get_field_map() {
         const api_field_name = row[row.length - 1];
         const api_field_details = API_FIELDS[api_field_name];
         mapping.set(form_field_name, {
+            name: api_field_name,
+            details: api_field_details,
             row: first_mappings_row + i,
-            details: api_field_details
         });
     });
     return mapping;
 }
 
 const API_FIELDS = {
-    // @ToDo: Add support for mapping the space name! :MultipleSpaces
+    // @ToDo: Maybe add support for mapping the space name. :MultipleSpaces
     'ignore': null,
     'Package name': {package: true},
     'First name': {member: 'firstName'},
