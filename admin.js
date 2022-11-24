@@ -14,9 +14,10 @@ function run_install() {
     install_edit_trigger();
 
     get_sheet(SETTINGS_SHEET_NAME, create_settings_sheet);
-    get_sheet(FIELD_MAPPINGS_SHEET_NAME, create_field_mappings_sheet);
+    const field_mappings_sheet = get_sheet(FIELD_MAPPINGS_SHEET_NAME, create_field_mappings_sheet);
     get_sheet(PACKAGE_MAPPINGS_SHEET_NAME, create_package_mappings_sheet);
 
+    field_mappings_sheet.activate();
     update_field_mappings_sheet();
 
     const api_key = get_or_ask_for_api_key();
