@@ -91,8 +91,6 @@ function on_installed_edit(e) {
                 update_package_mappings_sheet(true);
             }
         }
-
-        validate_field_mappings();
     }
 }
 
@@ -408,12 +406,12 @@ function validate_settings() {
     const api_key = get_or_ask_for_api_key();
     if (api_key && !validate_api_key(get_api_key_range())) return;
 
-    if (!validate_field_mappings(true)) return;
+    if (!validate_field_mappings()) return;
 
     validate_packages();
 }
 
-function validate_field_mappings(validate_name) {
+function validate_field_mappings() {
     const field_map = get_field_map();
 
     const mappings_sheet = get_sheet(FIELD_MAPPINGS_SHEET_NAME);
@@ -421,33 +419,32 @@ function validate_field_mappings(validate_name) {
     const values_range = mappings_sheet.getRange(first_mappings_row, FIELD_MAPPINGS_API_COLUMN, mappings_sheet.getLastRow() - first_mappings_row + 1, 1);
     values_range.setBackgroundColor(null);
 
-    // @ToDo: Allow duplicate fields and concatenate the answers (useful for notes)
-    let used = {};
+    // let used = {};
     let found_name = false;
     for (const [name, mapping] of field_map) {
         const details = mapping.details;
         if (!details) continue;
 
         // Check that no field is mapped more than once:
-        if (used[mapping.name]) {
-            const ui = SpreadsheetApp.getUi();
-            const message = `The Fabman member field \"${mapping.name}\" is mapped to more than one form field.`;
-            ui.alert('Field mapped more than once', message, ui.ButtonSet.OK);
-            const range1 = mappings_sheet.getRange(used[mapping.name], FIELD_MAPPINGS_API_COLUMN);
-            const range2 = mappings_sheet.getRange(mapping.row, FIELD_MAPPINGS_API_COLUMN);
-            range1.setBackgroundColor('red');
-            range2.setBackgroundColor('red');
-            range1.activate();
-            return false;
-        }
-        used[mapping.name] = mapping.row;
+        // if (used[mapping.name]) {
+        //     const ui = SpreadsheetApp.getUi();
+        //     const message = `The Fabman member field \"${mapping.name}\" is mapped to more than one form field.`;
+        //     ui.alert('Field mapped more than once', message, ui.ButtonSet.OK);
+        //     const range1 = mappings_sheet.getRange(used[mapping.name], FIELD_MAPPINGS_API_COLUMN);
+        //     const range2 = mappings_sheet.getRange(mapping.row, FIELD_MAPPINGS_API_COLUMN);
+        //     range1.setBackgroundColor('red');
+        //     range2.setBackgroundColor('red');
+        //     range1.activate();
+        //     return false;
+        // }
+        // used[mapping.name] = mapping.row;
 
         // Check that at least one field is mapped to a name field:
         if (details.member == 'firstName' || details.member == 'lastName') {
             found_name = true;
         }
     }
-    if (validate_name && !found_name) {
+    if (!found_name) {
         const ui = SpreadsheetApp.getUi();
         const message = 'Members need to have at least a first name or a last name. You have to map one form field to Fabman member field "First name" and/or "Last name".';
         ui.alert('Name not mapped', message, ui.ButtonSet.OK);

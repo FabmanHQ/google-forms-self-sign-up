@@ -16,9 +16,16 @@ function on_form_submitted(e) {
         account: me.account,
         notes: `Added via "Fabman Self Sign-Up for Google Sheets & Forms"`,
     };
-    let package_data = {};
-    for (const key of Object.keys(submitted_data)) {
-        set_value(key, submitted_data[key], field_map, package_map, member_data, package_data);
+    let package_ids = [];
+
+    // Retrieve original order of fields in the form and sort the field names accordingly
+    const field_names = Object.keys(submitted_data);
+    const form_items = get_form().getItems();
+    const ordered_titles = form_items.map(i => i.getTitle());
+    field_names.sort((a, b) => ordered_titles.indexOf(a) - ordered_titles.indexOf(b));
+
+    for (const field of field_names) {
+        set_value(field, submitted_data[field], field_map, package_map, member_data, package_ids);
     }
 
     if (!(member_data.firstName || member_data.lastName)) {
@@ -49,9 +56,9 @@ function on_form_submitted(e) {
 
     const member = JSON.parse(member_response.getContentText());
 
-    if (package_data.id) {
+    for (const package_id of package_ids) {
         const member_package = {
-            package: package_data.id,
+            package: package_id,
             fromDate: Utilities.formatDate(new Date(), member_space.timezone || "UTC", "yyyy-MM-dd"),
             notes: `Assigned during self sign-up`,
         };
@@ -61,19 +68,30 @@ function on_form_submitted(e) {
     // @ToDo: Write "added to Fabman" + a link into the column next to the member or write "failed" + error details if it failed
 }
 
-function set_value(form_field_name, form_value, field_map, package_map, member_data, package_data) {
+function set_value(form_field_name, form_value, field_map, package_map, member_data, package_ids) {
     const mapping = field_map.get(form_field_name);
     if (!mapping || !mapping.details) return;
 
     const details = mapping.details;
+    const value = form_value[0];
     if (details.member) {
-        member_data[details.member] = form_value[0];
-    } else if (details.package) {
-        const pkg = package_map.get(form_value[0]);
-        if (!pkg) {
-            throw new Error(`Could not find a mapping for package name "${form_value}".`);
+        if (member_data[details.member] && value) {
+            if (details.rich_text) {
+                member_data[details.member] += `<br>${form_field_name}: ${value}`;
+            } else {
+                member_data[details.member] += ` ${value}`;
+            }
+        } else {
+            member_data[details.member] = value;
         }
-        package_data.id = pkg.id;
+    } else if (details.package) {
+        if (value) {
+            const pkg = package_map.get(value);
+            if (!pkg) {
+                throw new Error(`Could not find a mapping for package name "${form_value}".`);
+            }
+            package_ids.push(pkg.id);
+        }
     } else {
         throw new Error(`Unexpected field mapping configuration for form field ${form_field_name}: ${JSON.stringify(mapping)}`);
     }

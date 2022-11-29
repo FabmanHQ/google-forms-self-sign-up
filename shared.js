@@ -171,7 +171,7 @@ const API_FIELDS = {
     'Date of birth': {member: 'dateOfBirth'},
     'Gender': {member: 'gender'},
     'Company': {member: 'company'},
-    'Notes': {member: 'notes'},
+    'Notes': {member: 'notes', rich_text: true},
     'Address line 1': {member: 'address'},
     'Address line 2': {member: 'address2'},
     'City': {member: 'city'},
