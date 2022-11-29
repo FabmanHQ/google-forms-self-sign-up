@@ -43,34 +43,34 @@ function get_sheet(name, create_function) {
     if (!sheet) {
         throw new Error(`Couldn’t find the "${name}" sheet`);
     }
-    return sheet;    
+    return sheet;
 }
 
 const SETTINGS = {
     api_key: 'API Key'
 };
 
-function get_api_key_range() {    
+function get_api_key_range() {
     const sheet = get_sheet(SETTINGS_SHEET_NAME);
     const last_row = sheet.getLastRow();
     const first_row = 2;
-    const settings = sheet.getRange(first_row, 1, last_row - 1, 2).getValues();    
+    const settings = sheet.getRange(first_row, 1, last_row - 1, 2).getValues();
     let row = first_row;
     for (const setting of settings) {
         if (setting[0] == SETTINGS.api_key) {
-            return sheet.getRange(row, 2, 1, 1);    
+            return sheet.getRange(row, 2, 1, 1);
         }
         row += 1;
     }
     throw new Error('Couldn’t find the API key setting!');
 }
 
-function get_api_key() {    
+function get_api_key() {
     const key_range = get_api_key_range();
     return key_range.getValue();
 }
 
-function set_api_key(api_key) {    
+function set_api_key(api_key) {
     const key_range = get_api_key_range();
     key_range.setValue(api_key);
     const sheet = get_sheet(SETTINGS_SHEET_NAME);
@@ -107,14 +107,14 @@ function get_or_ask_for_api_key() {
 
     return api_key;
 }
-    
+
 const PACKAGE_ID_EXPRESSION = /\(ID:\s*(\d+)\)$/;
 
-function get_configured_packages() {    
+function get_configured_packages() {
     const sheet = get_sheet(PACKAGE_MAPPINGS_SHEET_NAME);
 
     const first_package = 2;
-    const package_settings = sheet.getRange(first_package, 1, sheet.getLastRow() - first_package + 1, 2).getValues();    
+    const package_settings = sheet.getRange(first_package, 1, sheet.getLastRow() - first_package + 1, 2).getValues();
     const packages = new Map();
     let row = first_package;
     for (const setting of package_settings) {
@@ -162,7 +162,7 @@ function get_field_map() {
 const API_FIELDS = {
     // @ToDo: Maybe add support for mapping the space name. :MultipleSpaces
     'ignore': null,
-    'Package name': {package: true},
+    'Intial package': {package: true},
     'First name': {member: 'firstName'},
     'Last name': {member: 'lastName'},
     'Email address': {member: 'emailAddress'},
@@ -206,7 +206,7 @@ function fetch(api_key, url) {
     }
     const data = JSON.parse(response.getContentText());
     return data;
-}    
+}
 
 function fetch_all(api_key, url) {
     let separator = url.indexOf('?') === -1 ? '?' : '&';
@@ -235,7 +235,7 @@ function fetch_all(api_key, url) {
         if (results.length >= total_count) break;
     }
     return results;
-}    
+}
 
 function send_request(api_key, method, path, payload) {
     const response = try_send_request(api_key, method, path, payload);
@@ -244,7 +244,7 @@ function send_request(api_key, method, path, payload) {
     }
     const data = JSON.parse(response.getContentText());
     return data;
-}    
+}
 
 function try_send_request(api_key, method, url, payload) {
     const full_url = `https://fabman.io/api/v1${url}`;

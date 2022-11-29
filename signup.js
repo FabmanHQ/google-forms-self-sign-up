@@ -1,6 +1,6 @@
 function on_form_submitted(e) {
     Logger.log(`Event data: ${JSON.stringify(e.namedValues)}`);
-     
+
     const submitted_data = e.namedValues;
 
     const package_map = get_configured_packages();
@@ -14,7 +14,7 @@ function on_form_submitted(e) {
 
     let member_data = {
         account: me.account,
-        notes: `Added via "Fabman Self-Sign-Up for Google Sheets & Forms"`,
+        notes: `Added via "Fabman Self Sign-Up for Google Sheets & Forms"`,
     };
     let package_data = {};
     for (const key of Object.keys(submitted_data)) {
@@ -53,7 +53,7 @@ function on_form_submitted(e) {
         const member_package = {
             package: package_data.id,
             fromDate: Utilities.formatDate(new Date(), member_space.timezone || "UTC", "yyyy-MM-dd"),
-            notes: `Assigned during self-sign-up`,
+            notes: `Assigned during self sign-up`,
         };
         send_request(api_key, 'POST', `/members/${member.id}/packages`, member_package);
     }
