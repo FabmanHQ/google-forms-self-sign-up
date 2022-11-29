@@ -57,6 +57,8 @@ function on_form_submitted(e) {
         };
         send_request(api_key, 'POST', `/members/${member.id}/packages`, member_package);
     }
+
+    // @ToDo: Write "added to Fabman" + a link into the column next to the member or write "failed" + error details if it failed
 }
 
 function set_value(form_field_name, form_value, field_map, package_map, member_data, package_data) {
