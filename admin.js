@@ -82,7 +82,6 @@ function on_installed_edit(e) {
 
         if (range.getColumn() > FIELD_MAPPINGS_API_COLUMN || range.getLastColumn() < FIELD_MAPPINGS_API_COLUMN) return;
 
-
         // Check if they modified a value and mapped it to "package name":
         const rows = sheet.getRange(range.getRow(), FIELD_MAPPINGS_API_COLUMN, range.getNumRows(), 1).getValues();
         for (const row of rows) {
@@ -239,7 +238,7 @@ function update_field_mappings_sheet() {
 
     if (changed) {
         mappings_sheet.autoResizeColumn(1);
-        
+
         // Prevent the name column from being edited
         const protections = mappings_sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
         protections.forEach(p => p.remove());
@@ -281,7 +280,7 @@ function insert_or_delete_rows(sheet, first_row, names, name_description, defaul
                 break;
             }
         }
-        
+
         if (!found) {
             const row_number = first_row + index;
             Logger.log(`Deleting row ${row_number} because ${name_description} "${row[0]}" no longer exists.`);
@@ -367,7 +366,7 @@ function update_package_mappings_sheet(ask_for_key) {
     const changed = insert_or_delete_rows(mappings_sheet, first_mappings_row, form_choices, 'form package option', '');
     if (changed) {
         mappings_sheet.autoResizeColumn(1);
-        
+
         // Prevent the name column from being edited
         const protections = mappings_sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
         protections.forEach(p => p.remove());
@@ -409,12 +408,12 @@ function validate_settings() {
     const api_key = get_or_ask_for_api_key();
     if (api_key && !validate_api_key(get_api_key_range())) return;
 
-    if (!validate_field_mappings()) return;
+    if (!validate_field_mappings(true)) return;
 
     validate_packages();
 }
 
-function validate_field_mappings() {
+function validate_field_mappings(validate_name) {
     const field_map = get_field_map();
 
     const mappings_sheet = get_sheet(FIELD_MAPPINGS_SHEET_NAME);
@@ -422,6 +421,7 @@ function validate_field_mappings() {
     const values_range = mappings_sheet.getRange(first_mappings_row, FIELD_MAPPINGS_API_COLUMN, mappings_sheet.getLastRow() - first_mappings_row + 1, 1);
     values_range.setBackgroundColor(null);
 
+    // @ToDo: Allow duplicate fields and concatenate the answers (useful for notes)
     let used = {};
     let found_name = false;
     for (const [name, mapping] of field_map) {
@@ -447,7 +447,7 @@ function validate_field_mappings() {
             found_name = true;
         }
     }
-    if (!found_name) {
+    if (validate_name && !found_name) {
         const ui = SpreadsheetApp.getUi();
         const message = 'Members need to have at least a first name or a last name. You have to map one form field to Fabman member field "First name" and/or "Last name".';
         ui.alert('Name not mapped', message, ui.ButtonSet.OK);
@@ -463,7 +463,7 @@ function validate_packages() {
     const api_key = get_or_ask_for_api_key();
 
     const sheet = get_sheet(PACKAGE_MAPPINGS_SHEET_NAME);
- 
+
     const api_packages = fetch_packages(api_key);
     const packages = get_configured_packages();
     for (const [name, pkg] of packages) {
@@ -476,7 +476,7 @@ function validate_packages() {
         }
         if (!find_package(api_packages, pkg.id)) {
             const ui = SpreadsheetApp.getUi();
-            const message = `Could not find the package with ID ${pkg.id} for form option "${name}" in your Fabman account.\n` + 
+            const message = `Could not find the package with ID ${pkg.id} for form option "${name}" in your Fabman account.\n` +
                 `Please use the menu item "Extensions -> Fabman Self-Sign-Up -> ${MENU_ITEM_UPDATE_FROM_FABMAN_TITLE}" if you have added/removed packages from Fabman.`;
             ui.alert('Package not found', message, ui.ButtonSet.OK);
             sheet.getRange(pkg.row, PACKAGE_MAPPINGS_API_COLUMN).activate();
