@@ -44,7 +44,7 @@ function update_menu(e) {
         menu.addItem('Validate settings', 'validate_settings')
             .addItem(`${MENU_ITEM_UPDATE_FROM_FORM_TITLE} (if form fields have changed)`, 'update_from_form')
             .addItem(`${MENU_ITEM_UPDATE_FROM_FABMAN_TITLE} (if you have added/removed Fabman packages)`, 'update_from_fabman')
-            .addItem('Re-install', 'run_install')
+            .addItem('Set up this form again', 'run_install')
             .addToUi();
     }
 }
@@ -406,14 +406,17 @@ function validate_settings() {
     const api_key = get_or_ask_for_api_key();
     if (api_key && !validate_api_key(get_api_key_range())) return;
 
-    if (!validate_field_mappings()) return;
-
-    validate_packages();
-}
-
-function validate_field_mappings() {
     const field_map = get_field_map();
 
+    if (!validate_field_mappings(field_map)) return;
+
+    if (!validate_packages(field_map)) return;
+
+    const ui = SpreadsheetApp.getUi();
+    ui.alert('Everything is alright', 'Your setting seem to be OK.', ui.ButtonSet.OK);
+}
+
+function validate_field_mappings(field_map) {
     const mappings_sheet = get_sheet(FIELD_MAPPINGS_SHEET_NAME);
     const first_mappings_row = 2;
     const values_range = mappings_sheet.getRange(first_mappings_row, FIELD_MAPPINGS_API_COLUMN, mappings_sheet.getLastRow() - first_mappings_row + 1, 1);
@@ -456,7 +459,16 @@ function validate_field_mappings() {
 }
 
 
-function validate_packages() {
+function validate_packages(field_map) {
+    let has_package_field = false;
+    for (const [name, value] of field_map) {
+        if (value.details && value.details.package) {
+            has_package_field = true;
+            break;
+        }
+    }
+    if (!has_package_field) return true; // No need to validate anything
+
     const api_key = get_or_ask_for_api_key();
 
     const sheet = get_sheet(PACKAGE_MAPPINGS_SHEET_NAME);
@@ -469,7 +481,7 @@ function validate_packages() {
             const message = `You have not selected a Fabman package for form option "${name}"`;
             ui.alert('Package not mapped', message, ui.ButtonSet.OK);
             sheet.getRange(pkg.row, PACKAGE_MAPPINGS_API_COLUMN).activate();
-            return;
+            return false;
         }
         if (!find_package(api_packages, pkg.id)) {
             const ui = SpreadsheetApp.getUi();
@@ -477,9 +489,11 @@ function validate_packages() {
                 `Please use the menu item "Extensions -> Fabman Self-Sign-Up -> ${MENU_ITEM_UPDATE_FROM_FABMAN_TITLE}" if you have added/removed packages from Fabman.`;
             ui.alert('Package not found', message, ui.ButtonSet.OK);
             sheet.getRange(pkg.row, PACKAGE_MAPPINGS_API_COLUMN).activate();
-            return;
+            return false;
         }
     }
+
+    return true;
 }
 
 function find_package(packages, package_id) {
