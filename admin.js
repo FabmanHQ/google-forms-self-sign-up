@@ -9,6 +9,14 @@ function onInstall(e) {
 
 function run_install() {
     Logger.log('run_install');
+    const form_sheet = get_form_data_sheet();
+    if (!form_sheet) {
+        const message = 'This plugin is intended for Google Sheets that are linked to a Google Forms document. Please set up a Google Forms document, set its response destination to a Google Sheets document, and try this plugin on that Google Sheets document.';
+        const ui = SpreadsheetApp.getUi();
+        ui.alert('No Google Forms document found', message, ui.ButtonSet.OK);
+        return;
+    }
+
     update_menu();
     install_form_submit_trigger();
     install_edit_trigger();
@@ -37,7 +45,7 @@ function onOpen(e) {
 function update_menu(e) {
     const menu = SpreadsheetApp.getUi()
         .createMenu('Fabman');
-    if (e && e.authMode == ScriptApp.AuthMode.NONE) {
+    if ((e && e.authMode == ScriptApp.AuthMode.NONE) || get_sheet(FIELD_MAPPINGS_SHEET_NAME, create_field_mappings_sheet) == null) {
         menu.addItem('Set up this form', 'run_install')
             .addToUi();
     } else {
