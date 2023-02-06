@@ -30,7 +30,19 @@ function get_form() {
     if (!form_url) {
         throw new Error('This Google Sheet does not appear to be bound to a Google Form');
     }
-    return FormApp.openByUrl(form_url);
+
+    let retries = 0;
+    while (true) {
+        try {
+            return FormApp.openByUrl(form_url);
+        } catch (e) {
+            retries += 1;
+            if (retries > 3) {
+                throw e;
+            }
+            Utilities.sleep(2 * 1000);
+        }
+    }
 }
 
 function get_sheet(name, create_function) {
