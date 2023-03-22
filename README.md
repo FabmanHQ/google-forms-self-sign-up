@@ -1,6 +1,8 @@
 # Fabman Self Sign-Up plugin for Google Sheets & Google Forms
 
 A plugin for Google Sheets / Google Forms that allows you to create a self sign-up form for your members.
+[You can install it directly from the Google Workspace Marketplace.](https://workspace.google.com/u/1/marketplace/app/fabman_self_signup/252541183462)
+
 
 ## Field mappings
 
