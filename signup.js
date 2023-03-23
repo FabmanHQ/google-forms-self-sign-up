@@ -49,7 +49,7 @@ function on_form_submitted(e) {
         if (member_response.getResponseCode() > 299) {
             if (is_error(member_response, 422, 'duplicateEmailAddress')) {
                 // @ToDo: Better email template?
-                GmailApp.sendEmail(member_data.emailAddress, `Sign-up for ${member_space.name}`, `You tried signing up for ${member_space.name}, but there’s already a member with your email address.\n\n* If you already have an account and want to sign in, please go to https://fabman.io/members/${member_data.account}/login\n* If you have forgotten your password, then go to https://fabman.io/user/password-forgotten`);
+                GmailApp.sendEmail(member_data.emailAddress, `Sign-up for ${member_space.name}`, `You tried signing up for ${member_space.name}, but there’s already a member with your email address.\n\n* If you already have an account and want to sign in, please go to https://fabman.io/members/${member_data.account}/login\n* If you have forgotten your password, then go to https://fabman.io/members/${member_data.account}/user/password-forgotten`);
                 return;
             } else {
                 handle_request_error(member_response);
