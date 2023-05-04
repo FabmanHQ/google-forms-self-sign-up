@@ -84,7 +84,11 @@ function set_value(form_field_name, form_value, field_map, package_map, member_d
     if (!mapping || !mapping.details) return;
 
     const details = mapping.details;
-    const value = form_value[0];
+    let value = form_value[0];
+    if (details.date) {
+        const date_value = Utilities.parseDate(value, 'UTC', 'MM/dd/yy');
+        value = Utilities.formatDate(date_value, "UTC", "yyyy-MM-dd");
+    }
     if (details.member) {
         if (member_data[details.member] && value) {
             if (details.rich_text) {
