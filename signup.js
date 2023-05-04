@@ -1,3 +1,4 @@
+// @ToDo: Map county code somehow?
 function on_form_submitted(e) {
     Logger.log(`Event data: ${JSON.stringify(e.namedValues)}, event: ${JSON.stringify(e)}`);
     const range = e.range;
@@ -7,6 +8,7 @@ function on_form_submitted(e) {
 
         const package_map = get_configured_packages();
         const field_map = get_field_map();
+        const gender_map = get_configured_genders();
 
         const api_key = get_api_key();
         const me = fetch_me(api_key);
@@ -27,7 +29,7 @@ function on_form_submitted(e) {
         field_names.sort((a, b) => ordered_titles.indexOf(a) - ordered_titles.indexOf(b));
 
         for (const field of field_names) {
-            set_value(field, submitted_data[field], field_map, package_map, member_data, packages);
+            set_value(field, submitted_data[field], field_map, package_map, gender_map, member_data, packages);
         }
 
         if (!(member_data.firstName || member_data.lastName)) {
@@ -79,7 +81,7 @@ function on_form_submitted(e) {
     }
 }
 
-function set_value(form_field_name, form_value, field_map, package_map, member_data, packages) {
+function set_value(form_field_name, form_value, field_map, package_map, gender_map, member_data, packages) {
     const mapping = field_map.get(form_field_name);
     if (!mapping || !mapping.details) return;
 
@@ -94,7 +96,13 @@ function set_value(form_field_name, form_value, field_map, package_map, member_d
         }
     }
     if (details.member) {
-        if (member_data[details.member] && value) {
+        if (details.member === 'gender') {
+            const gender = gender_map.get(value);
+            if (!gender) {
+                throw new Error(`Could not find a mapping for gender name "${form_value}".`);
+            }
+            member_data.gender = gender.id;
+        } else if (member_data[details.member] && value) {
             if (details.rich_text) {
                 member_data[details.member] += `<br>${form_field_name}: ${value}`;
             } else {

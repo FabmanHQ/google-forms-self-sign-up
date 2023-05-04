@@ -61,6 +61,7 @@ function update_from_form() {
     get_or_ask_for_api_key();
     update_field_mappings_sheet();
     update_package_mappings_sheet();
+    update_gender_mappings_sheet();
 }
 
 function update_from_fabman() {
@@ -97,6 +98,9 @@ function on_installed_edit(e) {
             const api_field_details = API_FIELDS[api_field_name];
             if (api_field_details && api_field_details.package === 'name') {
                 update_package_mappings_sheet(true);
+            }
+            if (api_field_details && api_field_details.member === 'gender') {
+                update_gender_mappings_sheet(true);
             }
         }
     }
@@ -226,6 +230,24 @@ function create_package_mappings_sheet(name) {
     {
         const range = sheet.getRange(1, PACKAGE_MAPPINGS_API_COLUMN, 1, 1);
         range.setValue('Fabman package');
+        range.setFontWeight('bold');
+    }
+
+    sheet.autoResizeColumn(1);
+    sheet.autoResizeColumn(2);
+}
+
+function create_gender_mappings_sheet(name) {
+    const spreadsheet = SpreadsheetApp.getActive();
+    const sheet = spreadsheet.insertSheet(name);
+    {
+        const range = sheet.getRange(1, GENDER_MAPPINGS_FORM_COLUMN, 1, 1);
+        range.setValue('Form option name');
+        range.setFontWeight('bold');
+    }
+    {
+        const range = sheet.getRange(1, GENDER_MAPPINGS_API_COLUMN, 1, 1);
+        range.setValue('Gender');
         range.setFontWeight('bold');
     }
 
@@ -413,6 +435,81 @@ function update_package_mappings_sheet(ask_for_key) {
     mapping_value_range.setDataValidation(validation_rule);
     mappings_sheet.autoResizeColumn(2);
 }
+
+function update_gender_mappings_sheet(create_if_missing) {
+    Logger.log('Updating gender mappings sheet');
+
+    const mappings_sheet = get_sheet(GENDER_MAPPINGS_SHEET_NAME, create_if_missing ? create_gender_mappings_sheet : null);
+    if (!mappings_sheet) return;
+
+    const first_mappings_row = 2;
+
+    let gender_mapping_row;
+    let gender_form_item_title;
+    const field_map = get_field_map();
+    for (const [name, value] of field_map) {
+        if (value.details && value.details.member == 'gender') {
+            gender_form_item_title = name;
+            gender_mapping_row = value.row;
+            break;
+        }
+    }
+    if (!gender_form_item_title) {
+        insert_or_delete_rows(mappings_sheet, first_mappings_row, [`Please go to "${FIELD_MAPPINGS_SHEET_NAME}" and map one of your form fields to the Fabman field "Gender" before configuring the gender mappings.`], 'form gender option', '');
+        mappings_sheet.autoResizeColumn(1);
+        return;
+    }
+
+    let form_choices;
+    const form = get_form();
+    const form_items = form.getItems();
+    for (const item of form_items) {
+        // Logger.log(`Form item ${item.getId()}: ${item.getTitle()} ${item.getType()}`);
+        if (item.getTitle() == gender_form_item_title) {
+            if (item.getType() == FormApp.ItemType.LIST) {
+                const list_item = item.asListItem();
+                form_choices = list_item.getChoices().map(c => c.getValue());
+            } else if (item.getType() == FormApp.ItemType.MULTIPLE_CHOICE) {
+                const mc_item = item.asMultipleChoiceItem();
+                form_choices = mc_item.getChoices().map(c => c.getValue());
+            } else {
+                add_mapping_error(gender_mapping_row, 'This form field must be a list or multiple-choice item to be mapped to the gender name.');
+                return;
+            }
+        }
+    }
+
+    const changed = insert_or_delete_rows(mappings_sheet, first_mappings_row, form_choices, 'form gender option', '');
+    if (changed) {
+        mappings_sheet.autoResizeColumn(1);
+
+        // Prevent the name column from being edited
+        const protections = mappings_sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+        protections.forEach(p => p.remove());
+
+        const description = `Please use the menu item "Extensions -> Fabman Self-Sign-Up -> ${MENU_ITEM_UPDATE_FROM_FORM_TITLE}" if you changed any gender options in Google Forms.`;
+
+        const mapping_name_range = mappings_sheet.getRange(first_mappings_row, 1, mappings_sheet.getLastRow() - first_mappings_row + 1, 1);
+        mapping_name_range.setNote(description);
+
+        const protection = mapping_name_range.protect();
+        protection.setDescription(description);
+        protection.setWarningOnly(true);
+    }
+
+    // Set up the auto-fill settings for the mapping column
+    let validation_rule;
+    const gender_names = ['female', 'male', 'other'];
+    validation_rule = SpreadsheetApp.newDataValidation()
+        .requireValueInList(gender_names, true)
+        .setHelpText('Please select a gender to map this to in Fabman')
+        .setAllowInvalid(false)
+        .build();
+    const mapping_value_range = mappings_sheet.getRange(first_mappings_row, 2, mappings_sheet.getLastRow() - first_mappings_row + 1, 1);
+    mapping_value_range.setDataValidation(validation_rule);
+    mappings_sheet.autoResizeColumn(2);
+}
+
 
 function validate_settings() {
     const api_key = get_or_ask_for_api_key();

@@ -1,6 +1,7 @@
 const SETTINGS_SHEET_NAME = 'Settings';
 const PACKAGE_MAPPINGS_SHEET_NAME = 'Package mappings';
 const FIELD_MAPPINGS_SHEET_NAME = 'Field mappings';
+const GENDER_MAPPINGS_SHEET_NAME = 'Gender mappings';
 
 const SETTINGS_VALUE_COLUMN = 2;
 
@@ -9,6 +10,9 @@ const FIELD_MAPPINGS_API_COLUMN = 2;
 
 const PACKAGE_MAPPINGS_FORM_COLUMN = 1;
 const PACKAGE_MAPPINGS_API_COLUMN = 2;
+
+const GENDER_MAPPINGS_FORM_COLUMN = 1;
+const GENDER_MAPPINGS_API_COLUMN = 2;
 
 function get_form_data_sheet() {
     const spreadsheet = SpreadsheetApp.getActive();
@@ -150,6 +154,29 @@ function get_configured_packages() {
         throw new Error(`You need to define your packages in the "${PACKAGE_MAPPINGS_SHEET_NAME}" sheet!`);
     }
     return packages;
+}
+
+function get_configured_genders() {
+    const sheet = get_sheet(GENDER_MAPPINGS_SHEET_NAME);
+
+    const first_gender = 2;
+    const gender_settings = sheet.getRange(first_gender, 1, sheet.getLastRow() - first_gender + 1, 2).getValues();
+    const genders = new Map();
+    let row = first_gender;
+    for (const setting of gender_settings) {
+        Logger.log(`Gender "${setting[0]}": "${setting[1]}"`);
+        const form_name = setting[0];
+        const api_name = setting[1];
+        genders.set(form_name, {
+            id: api_name,
+            row,
+        });
+        row += 1;
+    }
+    if (!genders.size) {
+        throw new Error(`You need to define your genders in the "${GENDER_MAPPINGS_SHEET_NAME}" sheet!`);
+    }
+    return genders;
 }
 
 function get_field_map() {
