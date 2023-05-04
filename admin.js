@@ -240,6 +240,10 @@ function update_field_mappings_sheet() {
 
     const first_mappings_row = 2;
     const [form_header] = form_sheet.getRange(1, 1, 1, form_sheet.getLastColumn()).getValues();
+    if (!form_header[form_header.length - 1]) { // Remove potential "result" column (without title) at the end
+        form_header.pop();
+    }
+    const field_names = form_header;
     const changed = insert_or_delete_rows(mappings_sheet, first_mappings_row, form_header, 'form field', 'ignore');
 
     if (changed) {
