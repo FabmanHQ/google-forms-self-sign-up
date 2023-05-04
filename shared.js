@@ -282,8 +282,15 @@ function try_send_request(api_key, method, url, payload) {
 function handle_request_error(response) {
     // @ToDO: Unauth error handling, etc.?
     Logger.log(`Unexpected response code for "${response.request_method} ${response.request_url}": ${response.getResponseCode()}`);
-    Logger.log(response.getContentText());
-    throw new Error(`Couldn’t ${response.request_method} ${response.request_url}`);
+    const body = response.getContentText();
+    Logger.log(body);
+    let message = `Couldn’t ${response.request_method} ${response.request_url}`;
+    if (response.getResponseCode() == 400) {
+        const parsed = JSON.parse(body);
+        message += `: ${parsed.message}`;
+    }
+
+    throw new Error(message);
 }
 
 function is_error(response, code, tag) {
