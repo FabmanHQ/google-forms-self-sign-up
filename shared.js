@@ -174,7 +174,8 @@ function get_field_map() {
 const API_FIELDS = {
     // @ToDo: Maybe add support for mapping the space name. :MultipleSpaces
     'ignore': null,
-    'Intial package': {package: true},
+    'Intial package': {package: 'name'},
+    'Intial package start date': {package: 'fromDate', date: true},
     'First name': {member: 'firstName'},
     'Last name': {member: 'lastName'},
     'Email address': {member: 'emailAddress'},

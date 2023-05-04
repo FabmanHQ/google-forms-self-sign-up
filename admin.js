@@ -95,7 +95,7 @@ function on_installed_edit(e) {
         for (const row of rows) {
             const api_field_name = rows[0];
             const api_field_details = API_FIELDS[api_field_name];
-            if (api_field_details && api_field_details.package) {
+            if (api_field_details && api_field_details.package === 'name') {
                 update_package_mappings_sheet(true);
             }
         }
@@ -436,6 +436,8 @@ function validate_field_mappings(field_map) {
 
     // let used = {};
     let found_name = false;
+    let found_package = false;
+    let found_package_date = false;
     for (const [name, mapping] of field_map) {
         const details = mapping.details;
         if (!details) continue;
@@ -458,11 +460,26 @@ function validate_field_mappings(field_map) {
         if (details.member == 'firstName' || details.member == 'lastName') {
             found_name = true;
         }
+
+        // Check package mapping consistency
+        if (details.package == 'name') {
+            found_package = true;
+        }
+        if (details.package == 'fromDate') {
+            found_package_date = true;
+        }
     }
     if (!found_name) {
         const ui = SpreadsheetApp.getUi();
         const message = 'Members need to have at least a first name or a last name. You have to map one form field to Fabman member field "First name" and/or "Last name".';
         ui.alert('Name not mapped', message, ui.ButtonSet.OK);
+        mappings_sheet.activate();
+        return false;
+    }
+    if (found_package_date && !found_package) {
+        const ui = SpreadsheetApp.getUi();
+        const message = 'You’ve mapped a field to "Intial package start date", but did not map a form field to "Initial package".';
+        ui.alert('Package not mapped', message, ui.ButtonSet.OK);
         mappings_sheet.activate();
         return false;
     }

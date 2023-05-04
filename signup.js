@@ -18,7 +18,7 @@ function on_form_submitted(e) {
             account: me.account,
             notes: `Added via "Fabman Self Sign-Up for Google Sheets & Forms"`,
         };
-        let package_ids = [];
+        let packages = [];
 
         // Retrieve original order of fields in the form and sort the field names accordingly
         const field_names = Object.keys(submitted_data);
@@ -27,7 +27,7 @@ function on_form_submitted(e) {
         field_names.sort((a, b) => ordered_titles.indexOf(a) - ordered_titles.indexOf(b));
 
         for (const field of field_names) {
-            set_value(field, submitted_data[field], field_map, package_map, member_data, package_ids);
+            set_value(field, submitted_data[field], field_map, package_map, member_data, packages);
         }
 
         if (!(member_data.firstName || member_data.lastName)) {
@@ -59,10 +59,10 @@ function on_form_submitted(e) {
 
         const member = JSON.parse(member_response.getContentText());
 
-        for (const package_id of package_ids) {
+        for (const pkg of packages) {
             const member_package = {
-                package: package_id,
-                fromDate: Utilities.formatDate(new Date(), member_space.timezone || "UTC", "yyyy-MM-dd"),
+                package: pkg.id,
+                fromDate: pkg.fromDate || Utilities.formatDate(new Date(), member_space.timezone || "UTC", "yyyy-MM-dd"),
                 notes: `Assigned during self sign-up`,
             };
             send_request(api_key, 'POST', `/members/${member.id}/packages`, member_package);
@@ -79,7 +79,7 @@ function on_form_submitted(e) {
     }
 }
 
-function set_value(form_field_name, form_value, field_map, package_map, member_data, package_ids) {
+function set_value(form_field_name, form_value, field_map, package_map, member_data, packages) {
     const mapping = field_map.get(form_field_name);
     if (!mapping || !mapping.details) return;
 
@@ -101,11 +101,20 @@ function set_value(form_field_name, form_value, field_map, package_map, member_d
         }
     } else if (details.package) {
         if (value) {
-            const pkg = package_map.get(value);
-            if (!pkg) {
-                throw new Error(`Could not find a mapping for package name "${form_value}".`);
+            if (details.package === 'name') {
+                const pkg = package_map.get(value);
+                if (!pkg) {
+                    throw new Error(`Could not find a mapping for package name "${form_value}".`);
+                }
+                packages.push({id: pkg.id});
+            } else if (details.package === 'fromDate') {
+                const lastPackage = packages[packages.length - 1];
+                if (lastPackage && !lastPackage.fromDate) {
+                    lastPackage.fromDate = value;
+                } else {
+                    Logger.log(`Could not find a package for the package date: ${JSON.stringify(packages)}`);
+                }
             }
-            package_ids.push(pkg.id);
         }
     } else {
         throw new Error(`Unexpected field mapping configuration for form field ${form_field_name}: ${JSON.stringify(mapping)}`);
