@@ -6,7 +6,13 @@ function on_form_submitted(e) {
     const [form_header] = form_sheet.getRange(1, range.getColumn(), 1, range.getWidth()).getValues();
     const [typed_values] = range.getValues();
     // Logger.log(`Typed values: ${JSON.stringify(form_header)}: ${JSON.stringify(typed_values)}`);
-    const statusRange = range.offset(0, range.getWidth(), 1, 1);
+    let status_column = form_sheet.getLastColumn();
+    if (form_sheet.getRange(1, status_column, 1, 1).getValue()) {
+        // If there’s a title in this column, it’s probably not our status column, so let’s move one over
+        status_column += 1;
+    }
+
+    const statusRange = form_sheet.getRange(range.getRow(), status_column, 1, 1);
     try {
         const submitted_data = e.namedValues;
 
@@ -116,11 +122,11 @@ function set_value(form_field_name, form_value, field_map, package_map, gender_m
     if (details.member) {
         if (details.member === 'gender') {
             if (value) {
-            const gender = gender_map.get(value);
-            if (!gender) {
-                throw new Error(`Could not find a mapping for gender name "${form_value}".`);
-            }
-            member_data.gender = gender.id;
+                const gender = gender_map.get(value);
+                if (!gender) {
+                    throw new Error(`Could not find a mapping for gender name "${form_value}".`);
+                }
+                member_data.gender = gender.id;
             }
         } else if (member_data[details.member] && value) {
             if (details.rich_text) {
