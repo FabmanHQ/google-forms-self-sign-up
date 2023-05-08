@@ -2,6 +2,10 @@
 function on_form_submitted(e) {
     Logger.log(`Event data: ${JSON.stringify(e.namedValues)}, event: ${JSON.stringify(e)}`);
     const range = e.range;
+    const form_sheet = get_form_data_sheet();
+    const [form_header] = form_sheet.getRange(1, range.getColumn(), 1, range.getWidth()).getValues();
+    const [typed_values] = range.getValues();
+    // Logger.log(`Typed values: ${JSON.stringify(form_header)}: ${JSON.stringify(typed_values)}`);
     const statusRange = range.offset(0, range.getWidth(), 1, 1);
     try {
         const submitted_data = e.namedValues;
@@ -29,7 +33,9 @@ function on_form_submitted(e) {
         field_names.sort((a, b) => ordered_titles.indexOf(a) - ordered_titles.indexOf(b));
 
         for (const field of field_names) {
-            set_value(field, submitted_data[field], field_map, package_map, gender_map, member_data, packages);
+            const typed_value = typed_values[form_header.indexOf(field)];
+            // Logger.log(`${field}: real value: '${typed_value}' vs. submitted: '${submitted_data[field]}'`);
+            set_value(field, typed_value, field_map, package_map, gender_map, member_data, packages);
         }
 
         if (!(member_data.firstName || member_data.lastName)) {
@@ -86,15 +92,25 @@ function set_value(form_field_name, form_value, field_map, package_map, gender_m
     if (!mapping || !mapping.details) return;
 
     const details = mapping.details;
-    let value = form_value[0];
+    let value = form_value;
     if (details.date) {
         if (value) {
-            const date_value = Utilities.parseDate(value, 'UTC', 'MM/dd/yy');
-            value = Utilities.formatDate(date_value, "UTC", "yyyy-MM-dd");
+            if (!value.getUTCDate) { // Check if it’s a Date
+                value = Date.parse(value); // Let’s hope it’s in a format that Date.parse can handle…
+            }
+
+            // JavaScript makes it really hard to get a YYYY-MM-DD string in the _local_ timezone.
+            // I can’t believe we have to do it this way in 2023…
+            //  -rluba, 2023-05-08
+            const y = value.getFullYear()
+            const m = ('0' + (value.getMonth() + 1)).slice(-2)
+            const d = ('0' + value.getDate()).slice(-2)
+            value = `${y}-${m}-${d}`;
         } else {
             value = null;
         }
     }
+
     if (details.member) {
         if (details.member === 'gender') {
             const gender = gender_map.get(value);

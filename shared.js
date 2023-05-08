@@ -298,6 +298,7 @@ function try_send_request(api_key, method, url, payload) {
     };
     if (payload) {
         request.payload = JSON.stringify(payload);
+        Logger.log(`Payload: ${request.payload}`);
         request.headers['Content-Type'] = 'application/json';
     }
 
