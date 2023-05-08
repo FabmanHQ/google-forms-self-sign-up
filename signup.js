@@ -35,7 +35,7 @@ function on_form_submitted(e) {
         for (const field of field_names) {
             const typed_value = typed_values[form_header.indexOf(field)];
             // Logger.log(`${field}: real value: '${typed_value}' vs. submitted: '${submitted_data[field]}'`);
-            set_value(field, typed_value, field_map, package_map, gender_map, member_data, packages);
+            set_value(field, typed_value || null, field_map, package_map, gender_map, member_data, packages);
         }
 
         if (!(member_data.firstName || member_data.lastName)) {
@@ -109,15 +109,19 @@ function set_value(form_field_name, form_value, field_map, package_map, gender_m
         } else {
             value = null;
         }
+    } else if (typeof(value) === "number") {
+        value = '' + value; // Convert numbers to string
     }
 
     if (details.member) {
         if (details.member === 'gender') {
+            if (value) {
             const gender = gender_map.get(value);
             if (!gender) {
                 throw new Error(`Could not find a mapping for gender name "${form_value}".`);
             }
             member_data.gender = gender.id;
+            }
         } else if (member_data[details.member] && value) {
             if (details.rich_text) {
                 member_data[details.member] += `<br>${form_field_name}: ${value}`;
