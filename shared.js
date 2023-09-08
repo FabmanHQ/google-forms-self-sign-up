@@ -49,14 +49,14 @@ function get_form() {
     }
 }
 
-function get_sheet(name, create_function) {
+function get_sheet(name, create_function, optional) {
     const spreadsheet = SpreadsheetApp.getActive();
     let sheet = spreadsheet.getSheetByName(name);
     if (!sheet && create_function) {
         create_function(name);
         sheet = spreadsheet.getSheetByName(name);
     }
-    if (!sheet) {
+    if (!sheet && !optional) {
         throw new Error(`Couldn’t find the "${name}" sheet`);
     }
     return sheet;
@@ -157,11 +157,13 @@ function get_configured_packages() {
 }
 
 function get_configured_genders() {
-    const sheet = get_sheet(GENDER_MAPPINGS_SHEET_NAME);
+    const genders = new Map();
+
+    const sheet = get_sheet(GENDER_MAPPINGS_SHEET_NAME, null, true);
+    if (!sheet) return genders;
 
     const first_gender = 2;
     const gender_settings = sheet.getRange(first_gender, 1, sheet.getLastRow() - first_gender + 1, 2).getValues();
-    const genders = new Map();
     let row = first_gender;
     for (const setting of gender_settings) {
         Logger.log(`Gender "${setting[0]}": "${setting[1]}"`);
@@ -173,9 +175,7 @@ function get_configured_genders() {
         });
         row += 1;
     }
-    if (!genders.size) {
-        throw new Error(`You need to define your genders in the "${GENDER_MAPPINGS_SHEET_NAME}" sheet!`);
-    }
+
     return genders;
 }
 
