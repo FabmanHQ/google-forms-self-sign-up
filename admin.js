@@ -35,6 +35,7 @@ function run_install() {
     // @ToDo: Check if there’s only one space?
 
     update_package_mappings_sheet();
+    maybe_update_gender_mappings_sheet(field_mappings_sheet);
 }
 
 function onOpen(e) {
@@ -59,9 +60,31 @@ function update_menu(e) {
 
 function update_from_form() {
     get_or_ask_for_api_key();
-    update_field_mappings_sheet();
+    const field_mappings_sheet = update_field_mappings_sheet();
     update_package_mappings_sheet();
-    update_gender_mappings_sheet();
+
+    maybe_update_gender_mappings_sheet(field_mappings_sheet);
+}
+
+function maybe_update_gender_mappings_sheet(field_mappings_sheet) {
+    const first_mappings_row = 2;
+    const last_row = field_mappings_sheet.getLastRow();
+    const num_rows = last_row - first_mappings_row;
+    let has_gender_mapping = false;
+    if (num_rows > 0) {
+        const rows = field_mappings_sheet.getRange(first_mappings_row, FIELD_MAPPINGS_API_COLUMN, num_rows, 1).getValues();
+        for (const row of rows) {
+            const api_field_name = row[0];
+            if (is_gender_field(api_field_name)) {
+                has_gender_mapping = true;
+                break;
+            }
+        }
+    }
+
+    if (has_gender_mapping) {
+        update_gender_mappings_sheet(true);
+    }
 }
 
 function update_from_fabman() {
@@ -94,16 +117,25 @@ function on_installed_edit(e) {
         // Check if they modified a value and mapped it to "package name":
         const rows = sheet.getRange(range.getRow(), FIELD_MAPPINGS_API_COLUMN, range.getNumRows(), 1).getValues();
         for (const row of rows) {
-            const api_field_name = rows[0];
-            const api_field_details = API_FIELDS[api_field_name];
-            if (api_field_details && api_field_details.package === 'name') {
+            const api_field_name = row[0];
+            if (is_package_field(api_field_name)) {
                 update_package_mappings_sheet(true);
             }
-            if (api_field_details && api_field_details.member === 'gender') {
+            if (is_gender_field(api_field_name)) {
                 update_gender_mappings_sheet(true);
             }
         }
     }
+}
+
+function is_package_field(api_field_name) {
+    const api_field_details = API_FIELDS[api_field_name];
+    return (api_field_details && api_field_details.package === 'name');
+}
+
+function is_gender_field(api_field_name) {
+    const api_field_details = API_FIELDS[api_field_name];
+    return (api_field_details && api_field_details.member === 'gender');
 }
 
 function on_api_key_changed(api_key_range) {
@@ -266,7 +298,7 @@ function update_field_mappings_sheet() {
         form_header.pop();
     }
     const field_names = form_header;
-    const changed = insert_or_delete_rows(mappings_sheet, first_mappings_row, form_header, 'form field', 'ignore');
+    const changed = insert_or_delete_rows(mappings_sheet, first_mappings_row, field_names, 'form field', 'ignore');
 
     if (changed) {
         mappings_sheet.autoResizeColumn(1);
@@ -293,6 +325,8 @@ function update_field_mappings_sheet() {
         const mapping_value_range = mappings_sheet.getRange(first_mappings_row, 2, mappings_sheet.getLastRow() - first_mappings_row + 1, 1);
         mapping_value_range.setDataValidation(validation_rule);
     }
+
+    return mappings_sheet;
 }
 
 function insert_or_delete_rows(sheet, first_row, names, name_description, default_value) {
