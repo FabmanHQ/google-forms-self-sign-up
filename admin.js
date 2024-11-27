@@ -423,10 +423,14 @@ function update_package_mappings_sheet(ask_for_key) {
                 const mc_item = item.asMultipleChoiceItem();
                 form_choices = mc_item.getChoices().map(c => c.getValue());
             } else {
-                add_mapping_error(package_mapping_row, 'This form field must be a list or multiple-choice item to be mapped to the package name.');
+                add_mapping_error(package_mapping_row, `The form field "${package_form_item_title}" must be a list or multiple-choice item to be mapped to the package name, but it’s currently a ${item.getType()}.`);
                 return;
             }
         }
+    }
+    if (!form_choices) {
+        add_mapping_error(package_mapping_row, `Could not find the form field "${package_form_item_title}" in your form.`);
+        return;
     }
 
     const changed = insert_or_delete_rows(mappings_sheet, first_mappings_row, form_choices, 'form package option', '');
