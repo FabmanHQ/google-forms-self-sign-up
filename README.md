@@ -10,4 +10,4 @@ If you map multiple form fields to the same Fabman field, their answers will be 
 
 ## Publishing
 
-If you’ve installed `clasp` and have configured your `appsscript.json`, you can push the current version of the plugin to your Google Apps Script project via `clasp push`.
+If you’ve installed [`clasp`](https://github.com/google/clasp) and have configured your `appsscript.json`, you can push the current version of the plugin to your Google Apps Script project via `clasp push`.
