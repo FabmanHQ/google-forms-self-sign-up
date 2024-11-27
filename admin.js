@@ -398,7 +398,7 @@ function update_package_mappings_sheet(ask_for_key) {
     let package_form_item_title;
     const field_map = get_field_map();
     for (const [name, value] of field_map) {
-        if (value.details && value.details.package) {
+        if (value.details?.package === 'name') {
             package_form_item_title = name;
             package_mapping_row = value.row;
             break;
