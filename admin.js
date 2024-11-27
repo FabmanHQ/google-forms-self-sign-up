@@ -405,7 +405,7 @@ function update_package_mappings_sheet(ask_for_key) {
         }
     }
     if (!package_form_item_title) {
-        insert_or_delete_rows(mappings_sheet, first_mappings_row, [`Please go to "${FIELD_MAPPINGS_SHEET_NAME}" and map one of your form fields to the Fabman field "Package name" before configuring the package mappings.`], 'form package option', '');
+        insert_or_delete_rows(mappings_sheet, first_mappings_row, [`Please go to "${FIELD_MAPPINGS_SHEET_NAME}" and map one of your form fields to the Fabman field "Initial package" before configuring the package mappings.`], 'form package option', '');
         mappings_sheet.autoResizeColumn(1);
         return;
     }
