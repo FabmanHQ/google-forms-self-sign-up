@@ -422,8 +422,11 @@ function update_package_mappings_sheet(ask_for_key) {
             } else if (item.getType() == FormApp.ItemType.MULTIPLE_CHOICE) {
                 const mc_item = item.asMultipleChoiceItem();
                 form_choices = mc_item.getChoices().map(c => c.getValue());
+            } else if (item.getType() == FormApp.ItemType.CHECKBOX) {
+                const cb_item = item.asCheckboxItem();
+                form_choices = cb_item.getChoices().map(c => c.getValue());
             } else {
-                add_mapping_error(package_mapping_row, `The form field "${package_form_item_title}" must be a list or multiple-choice item to be mapped to the package name, but it’s currently a ${item.getType()}.`);
+                add_mapping_error(package_mapping_row, `The form field "${package_form_item_title}" must be a list, multiple-choice, or checkbox item to be mapped to the package name, but it’s currently a ${item.getType()}.`);
                 return;
             }
         }

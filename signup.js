@@ -146,16 +146,50 @@ function set_value(form_field_name, form_value, field_map, package_map, gender_m
     } else if (details.package) {
         if (value) {
             if (details.package === 'name') {
-                const pkg = package_map.get(value);
-                if (!pkg) {
-                    throw new Error(`Could not find a mapping for package name "${form_value}".`);
+                const sorted_keys = [...package_map.keys()];
+                sorted_keys.sort((a, b) => b.length - a.length);
+                Logger.log(`Sorted packages: \"${sorted_keys}\"`);
+                let remainder = value.replace(/ +/g, ' '); // Google Form replaces multiple spaces with a single space when we query the available choices of a question, but uses the full string for the actual answers. -rluba, 2024-12-19
+                while (remainder) {
+                    let found = false;
+                    for (const key of sorted_keys) {
+                        Logger.log(`Trying package \"${key}\" for remainder \"${remainder}\"`);
+                        if (remainder.startsWith(key)) {
+                            remainder = remainder.substring(key.length);
+                            if (remainder) {
+                                if (!remainder.startsWith(', ')) {
+                                    throw new Error(`Unexpected package name separator: "${remainder}" (of "${form_value}").`);
+                                }
+                                remainder = remainder.substring(2);
+                            }
+
+                            const pkg = package_map.get(key);
+                            if (!pkg) {
+                                throw new Error(`Package name "${key}" is not mapped to any package.`);
+                            }
+                            if (!pkg.id) {
+                                throw new Error(`Package name "${key}" has no configured mapping.`);
+                            }
+
+                            packages.push({id: pkg.id});
+                            found = true;
+                            Logger.log(`Added package ${pkg.id} for \"${key}\". Remainder: \"${remainder}\"`);
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        throw new Error(`Could not find a mapping for package name "${remainder}" (of "${form_value}").`);
+                    }
                 }
-                packages.push({id: pkg.id});
             } else if (details.package === 'fromDate') {
-                const lastPackage = packages[packages.length - 1];
-                if (lastPackage && !lastPackage.fromDate) {
-                    lastPackage.fromDate = value;
-                } else {
+                let found = false;
+                for (const pkg of packages) {
+                    if (!pkg.fromDate) {
+                        pkg.fromDate = value;
+                        found = true;
+                    }
+                }
+                if (!found) {
                     Logger.log(`Could not find a package for the package date: ${JSON.stringify(packages)}`);
                 }
             }
