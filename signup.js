@@ -6,16 +6,22 @@ function on_form_submitted(e) {
     const [form_header] = form_sheet.getRange(1, range.getColumn(), 1, range.getWidth()).getValues();
     const [typed_values] = range.getValues();
     // Logger.log(`Typed values: ${JSON.stringify(form_header)}: ${JSON.stringify(typed_values)}`);
+
+    const submitted_data = e.namedValues;
     let status_column = form_sheet.getLastColumn();
-    if (form_sheet.getRange(1, status_column, 1, 1).getValue()) {
-        // If there’s a title in this column, it’s probably not our status column, so let’s move one over
+    const status_column_title = form_sheet.getRange(1, status_column, 1, 1).getValue();
+    // We used to check if there is any title in that column and, if yes, pick the next column (since our status column does not contain a title).
+    // But using some (unknown) Google Sheets feature automatically adds a "Column N" title to every column without a title.
+    // So instead we now only move if we’re in a column that belongs to the form.
+    //  -rluba, 2024-12-19
+    if (status_column_title && submitted_data[status_column_title] !== undefined) {
         status_column += 1;
     }
 
     const statusRange = form_sheet.getRange(range.getRow(), status_column, 1, 1);
-    try {
-        const submitted_data = e.namedValues;
+    Logger.log(`Status range: ${range.getRow()}/${range.getColumn()} -> ${statusRange.getRow()}/${statusRange.getColumn()}`);
 
+    try {
         const package_map = get_configured_packages();
         const field_map = get_field_map();
         const gender_map = get_configured_genders();
