@@ -206,7 +206,7 @@ const API_FIELDS = {
     'First name': {member: 'firstName'},
     'Last name': {member: 'lastName'},
     'Email address': {member: 'emailAddress'},
-    'Member number': {member: 'firstName'},
+    'Member number': {member: 'memberNumber'},
     'Phone': {member: 'phone'},
     'Date of birth': {member: 'dateOfBirth', date: true},
     'Gender': {member: 'gender'},
