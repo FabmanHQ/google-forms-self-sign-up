@@ -129,12 +129,12 @@ function on_installed_edit(e) {
 }
 
 function is_package_field(api_field_name) {
-    const api_field_details = API_FIELDS[api_field_name];
+    const api_field_details = get_api_field_details(api_field_name);
     return (api_field_details && api_field_details.package === 'name');
 }
 
 function is_gender_field(api_field_name) {
-    const api_field_details = API_FIELDS[api_field_name];
+    const api_field_details = get_api_field_details(api_field_name);
     return (api_field_details && api_field_details.member === 'gender');
 }
 
@@ -616,7 +616,7 @@ function validate_field_mappings(field_map) {
     }
     if (found_package_date && !found_package) {
         const ui = SpreadsheetApp.getUi();
-        const message = 'You’ve mapped a field to "Intial package start date", but did not map a form field to "Initial package".';
+        const message = 'You’ve mapped a field to "Initial package start date", but did not map a form field to "Initial package".';
         ui.alert('Package not mapped', message, ui.ButtonSet.OK);
         mappings_sheet.activate();
         return false;

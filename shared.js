@@ -188,7 +188,7 @@ function get_field_map() {
     values.forEach((row, i) => {
         const form_field_name = row[0];
         const api_field_name = row[row.length - 1];
-        const api_field_details = API_FIELDS[api_field_name];
+        const api_field_details = get_api_field_details(api_field_name);
         mapping.set(form_field_name, {
             name: api_field_name,
             details: api_field_details,
@@ -198,11 +198,15 @@ function get_field_map() {
     return mapping;
 }
 
+function get_api_field_details(name) {
+    return API_FIELDS[name] || LEGACY_API_FIELDS[name];
+}
+
 const API_FIELDS = {
     // @ToDo: Maybe add support for mapping the space name. :MultipleSpaces
     'ignore': null,
-    'Intial package': {package: 'name'},
-    'Intial package start date': {package: 'fromDate', date: true},
+    'Initial package': {package: 'name'},
+    'Initial package start date': {package: 'fromDate', date: true},
     'First name': {member: 'firstName'},
     'Last name': {member: 'lastName'},
     'Email address': {member: 'emailAddress'},
@@ -230,6 +234,11 @@ const API_FIELDS = {
     'Billing address: Region / State': {member: 'billingRegion'},
 };
 
+// These had typos before. We keep them around to not break people's existing mappings
+const LEGACY_API_FIELDS = {
+    'Intial package': {package: 'name'},
+    'Intial package start date': {package: 'fromDate', date: true},
+};
 
 function fetch_me(api_key) {
     return fetch(api_key, '/user/me');
