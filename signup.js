@@ -131,6 +131,8 @@ function set_value(form_field_name, form_value, field_map, package_map, gender_m
         } else {
             value = null;
         }
+    } else if (details.json) {
+        value = {[form_field_name]: ('' + value).trim()};
     } else if (typeof(value) === "number") {
         value = '' + value; // Convert numbers to string
     }
@@ -147,6 +149,8 @@ function set_value(form_field_name, form_value, field_map, package_map, gender_m
         } else if (member_data[details.member] && value) {
             if (details.rich_text) {
                 member_data[details.member] += `<br>${form_field_name}: ${value}`;
+            } else if (details.json) {
+                Object.assign(member_data[details.member], value);
             } else {
                 member_data[details.member] += ` ${value}`;
             }

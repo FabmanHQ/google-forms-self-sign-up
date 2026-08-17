@@ -216,6 +216,7 @@ const API_FIELDS = {
     'Gender': {member: 'gender'},
     'Company': {member: 'company'},
     'Notes': {member: 'notes', rich_text: true},
+    'Metadata': {member: 'metadata', json: true},
     'Address line 1': {member: 'address'},
     'Address line 2': {member: 'address2'},
     'City': {member: 'city'},
