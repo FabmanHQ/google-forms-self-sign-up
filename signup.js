@@ -135,6 +135,8 @@ function set_value(form_field_name, form_value, field_map, package_map, gender_m
         value = {[form_field_name]: ('' + value).trim()};
     } else if (typeof(value) === "number") {
         value = '' + value; // Convert numbers to string
+    } else if (typeof(value) === 'string') {
+        value = value.trim();
     }
 
     if (details.member) {
