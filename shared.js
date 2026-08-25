@@ -95,12 +95,12 @@ function set_api_key(api_key) {
 
 function get_or_ask_for_api_key() {
     let api_key = get_api_key();
-    Logger.log(`API Key: ${api_key}`);
+    // Logger.log(`API Key: ${api_key}`);
 
     const base_message = 'Please copy & paste a Fabman API Key token for your Fabman account. For more information on how to create API keys, go to https://help.fabman.io/article/80-api-key';
     let message = base_message;
     while (!api_key) {
-        Logger.log(`Asking for API key: ${api_key}`);
+        // Logger.log(`Asking for API key: ${api_key}`);
         const ui = SpreadsheetApp.getUi();
         const response = ui.prompt('Enter API Key', message, ui.ButtonSet.OK_CANCEL);
 
