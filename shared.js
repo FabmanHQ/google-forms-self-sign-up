@@ -63,27 +63,56 @@ function get_sheet(name, create_function, optional) {
 }
 
 const SETTINGS = {
-    api_key: 'API Key'
+    api_key: 'API Key',
+    remove_on_success: 'Remove form responses on success',
 };
 
-function get_api_key_range() {
+const SETTING_DEFINITIONS = [
+    {
+        name: SETTINGS.api_key,
+        note: 'Please sign in to your Fabman account, create an API key, and paste the access token into this cell. For more information on how to create API keys, go to https://help.fabman.io/article/80-api-key',
+    },
+    {
+        name: SETTINGS.remove_on_success,
+        note: 'If checked, every response row is deleted from the responses sheet as soon as that member has been created in Fabman. Responses that caused an error are kept so you can review the problem. This keeps personal data out of this spreadsheet, but keep in mind that Google Forms still stores the original responses unless you turn that off in your form.',
+        checkbox: true,
+    },
+];
+
+const FIRST_SETTINGS_ROW = 2;
+
+function get_setting_range(name, optional) {
     const sheet = get_sheet(SETTINGS_SHEET_NAME);
     const last_row = sheet.getLastRow();
-    const first_row = 2;
-    const settings = sheet.getRange(first_row, 1, last_row - 1, 2).getValues();
-    let row = first_row;
-    for (const setting of settings) {
-        if (setting[0] == SETTINGS.api_key) {
-            return sheet.getRange(row, 2, 1, 1);
+    if (last_row >= FIRST_SETTINGS_ROW) {
+        const settings = sheet.getRange(FIRST_SETTINGS_ROW, 1, last_row - FIRST_SETTINGS_ROW + 1, 1).getValues();
+        let row = FIRST_SETTINGS_ROW;
+        for (const setting of settings) {
+            if (setting[0] == name) {
+                return sheet.getRange(row, SETTINGS_VALUE_COLUMN, 1, 1);
+            }
+            row += 1;
         }
-        row += 1;
     }
-    throw new Error('Couldn’t find the API key setting!');
+    if (optional) return null;
+    throw new Error(`Couldn’t find the "${name}" setting!`);
+}
+
+function get_api_key_range() {
+    return get_setting_range(SETTINGS.api_key);
 }
 
 function get_api_key() {
     const key_range = get_api_key_range();
     return key_range.getValue();
+}
+
+// This setting is missing in sheets that were created by older versions of this plugin, so treat it as optional.
+function should_remove_responses_on_success() {
+    const range = get_setting_range(SETTINGS.remove_on_success, true);
+    if (!range) return false;
+    const value = range.getValue();
+    return value === true || value === 'TRUE';
 }
 
 function set_api_key(api_key) {

@@ -21,7 +21,7 @@ function run_install() {
     install_form_submit_trigger();
     install_edit_trigger();
 
-    get_sheet(SETTINGS_SHEET_NAME, create_settings_sheet);
+    update_settings_sheet();
     const field_mappings_sheet = get_sheet(FIELD_MAPPINGS_SHEET_NAME, create_field_mappings_sheet);
     get_sheet(PACKAGE_MAPPINGS_SHEET_NAME, create_package_mappings_sheet);
 
@@ -59,6 +59,7 @@ function update_menu(e) {
 }
 
 function update_from_form() {
+    update_settings_sheet();
     get_or_ask_for_api_key();
     const field_mappings_sheet = update_field_mappings_sheet();
     update_package_mappings_sheet();
@@ -213,13 +214,39 @@ function create_settings_sheet(name) {
         range.setValue('Value');
         range.setFontWeight('bold');
     }
-    {
-        const range = sheet.getRange(2, 1, 1, 1);
-        range.setValue(SETTINGS.api_key);
+
+    update_settings_sheet(sheet);
+}
+
+// Appends settings that are missing so that sheets created by older versions of this plugin get the newer settings, too.
+function update_settings_sheet(sheet) {
+    if (!sheet) {
+        sheet = get_sheet(SETTINGS_SHEET_NAME, create_settings_sheet);
     }
-    {
-        const range = sheet.getRange(2, SETTINGS_VALUE_COLUMN, 1, 1);
-        range.setNote('Please sign in to your Fabman account, create an API key, and paste the access token into this cell. For more information on how to create API keys, go to https://help.fabman.io/article/80-api-key');
+
+    const last_row = sheet.getLastRow();
+    let existing_names = [];
+    if (last_row >= FIRST_SETTINGS_ROW) {
+        existing_names = sheet.getRange(FIRST_SETTINGS_ROW, 1, last_row - FIRST_SETTINGS_ROW + 1, 1).getValues().map(row => row[0]);
+    }
+    Logger.log(`Updating settings sheet. Existing settings: ${JSON.stringify(existing_names)}`);
+
+    for (const setting of SETTING_DEFINITIONS) {
+        if (existing_names.indexOf(setting.name) != -1) continue;
+
+        Logger.log(`Adding the "${setting.name}" setting to the "${SETTINGS_SHEET_NAME}" sheet`);
+        const row = Math.max(sheet.getLastRow() + 1, FIRST_SETTINGS_ROW);
+        sheet.getRange(row, 1, 1, 1).setValue(setting.name);
+
+        const value_range = sheet.getRange(row, SETTINGS_VALUE_COLUMN, 1, 1);
+        value_range.setNote(setting.note);
+        if (setting.checkbox) {
+            const validation_rule = SpreadsheetApp.newDataValidation()
+                .requireCheckbox()
+                .build();
+            value_range.setDataValidation(validation_rule);
+            value_range.setValue(false);
+        }
     }
 
     sheet.autoResizeColumn(1);
@@ -228,9 +255,11 @@ function create_settings_sheet(name) {
     const protections = sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
     protections.forEach(p => p.remove());
 
-    const protection = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).protect();
+    const protection = sheet.getRange(FIRST_SETTINGS_ROW, 1, sheet.getLastRow() - FIRST_SETTINGS_ROW + 1, 1).protect();
     protection.setDescription('Please only edit the setting values');
     protection.setWarningOnly(true);
+
+    return sheet;
 }
 
 function create_field_mappings_sheet(name) {

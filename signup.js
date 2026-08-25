@@ -25,6 +25,8 @@ function on_form_submitted(e) {
         const package_map = get_configured_packages();
         const field_map = get_field_map();
         const gender_map = get_configured_genders();
+        // Read this before we create the member so that a broken settings sheet doesn’t cause a misleading error message afterwards
+        const remove_on_success = should_remove_responses_on_success();
 
         const api_key = get_api_key();
         const me = fetch_me(api_key);
@@ -98,11 +100,16 @@ function on_form_submitted(e) {
             send_request(api_key, 'POST', `/members/${member.id}/packages`, member_package);
         }
 
-        const resultValue = SpreadsheetApp.newRichTextValue()
-            .setText('Added to Fabman')
-            .setLinkUrl(`https://fabman.io/manage/${member.account}/members/${member.id}`)
-            .build();
-        statusRange.setRichTextValue(resultValue);
+        if (remove_on_success) {
+            Logger.log(`Deleting row ${range.getRow()} because member ${member.id} was created successfully`);
+            form_sheet.deleteRow(range.getRow());
+        } else {
+            const resultValue = SpreadsheetApp.newRichTextValue()
+                .setText('Added to Fabman')
+                .setLinkUrl(`https://fabman.io/manage/${member.account}/members/${member.id}`)
+                .build();
+            statusRange.setRichTextValue(resultValue);
+        }
     } catch (e) {
         statusRange.setValue(`Error occurred while trying to create the member:\n${e.toString()}`);
         throw e;
