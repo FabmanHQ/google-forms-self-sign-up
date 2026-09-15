@@ -45,12 +45,20 @@ function on_form_submitted(e) {
         const form_items = get_form().getItems();
         const ordered_titles = form_items.map(i => i.getTitle());
         field_names.sort((a, b) => ordered_titles.indexOf(a) - ordered_titles.indexOf(b));
+        Logger.log(`Sorted field names: ${JSON.stringify(field_names)}`);
 
         for (const field of field_names) {
             const typed_value = typed_values[form_header.indexOf(field)];
             // Logger.log(`${field}: real value: '${typed_value}' vs. submitted: '${submitted_data[field]}'`);
-            set_value(field, typed_value || null, field_map, package_map, gender_map, member_data, packages);
+            set_value(field, typed_value || null, field_map, package_map, gender_map, member_data, packages, true);
         }
+        // Do a second pass so that we can assign the package dates
+        for (const field of field_names) {
+            const typed_value = typed_values[form_header.indexOf(field)];
+            // Logger.log(`${field}: real value: '${typed_value}' vs. submitted: '${submitted_data[field]}'`);
+            set_value(field, typed_value || null, field_map, package_map, gender_map, member_data, packages, false);
+        }
+
 
         if (!(member_data.firstName || member_data.lastName)) {
             throw new Error("A member must have at least a first name or a last name");
@@ -97,6 +105,7 @@ function on_form_submitted(e) {
                 fromDate: pkg.fromDate || Utilities.formatDate(new Date(), member_space.timezone || "UTC", "yyyy-MM-dd"),
                 notes: `Assigned during self sign-up`,
             };
+            Logger.log(`Creating package ${JSON.stringify(pkg)} -> ${JSON.stringify(member_package)}`);
             send_request(api_key, 'POST', `/members/${member.id}/packages`, member_package);
         }
 
@@ -116,13 +125,20 @@ function on_form_submitted(e) {
     }
 }
 
-function set_value(form_field_name, form_value, field_map, package_map, gender_map, member_data, packages) {
+function set_value(form_field_name, form_value, field_map, package_map, gender_map, member_data, packages, first_round) {
     const mapping = field_map.get(form_field_name);
     if (!mapping || !mapping.details) return;
 
     const details = mapping.details;
+    if (details.package === 'fromDate') {
+        if (first_round) return;
+    } else {
+        if (!first_round) return;
+    }
+
     let value = form_value;
     if (details.date) {
+        const originalValue = value;
         if (value) {
             if (!value.getUTCDate) { // Check if it’s a Date
                 value = Date.parse(value); // Let’s hope it’s in a format that Date.parse can handle…
@@ -138,6 +154,7 @@ function set_value(form_field_name, form_value, field_map, package_map, gender_m
         } else {
             value = null;
         }
+        Logger.log(`Converted date value ${originalValue} (${typeof(originalValue)}) to ${value} (${typeof(value)}) for mapping: ${JSON.stringify(details)}`);
     } else if (details.json) {
         value = {[form_field_name]: ('' + value).trim()};
     } else if (typeof(value) === "number") {
@@ -208,12 +225,13 @@ function set_value(form_field_name, form_value, field_map, package_map, gender_m
                 let found = false;
                 for (const pkg of packages) {
                     if (!pkg.fromDate) {
+                        Logger.log(`Setting fromDate "${value}" for package ${JSON.stringify(pkg)}`);
                         pkg.fromDate = value;
                         found = true;
                     }
                 }
                 if (!found) {
-                    Logger.log(`Could not find a package for the package date: ${JSON.stringify(packages)}`);
+                    Logger.log(`Could not find a package for the package date ${value}: ${JSON.stringify(packages)}`);
                 }
             }
         }
